@@ -1,5 +1,7 @@
-# Service would get a callback notification from app about the 
-# data change and respond 200 Ok.
+# This is a Sample 3rd party Firewall Service which can be registered with this App to get a callback notification from app about the 
+# data change (basically when a new os/mac/ip is detected and then it just responds with 200 Ok. This is just for the demonstration example to
+# show how a 3rd party firewall service can also be attached to this app.
+
 import json
 import asyncio
 import logging
