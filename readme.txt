@@ -1,9 +1,15 @@
 Introduction:
-It is a lightweight security policy and Firewalling solution implemented using the POX SDN framework. It applies defualt security policies to any new mac/ip as soon as it is discovered over an overlay bridge. 
+It is a lightweight security policy and Firewalling solution implemented using the POX SDN framework. It applies defualt security policies to any new mac/ip as
+soon as it is discovered over an overlay bridge. 
 
 UseCase/Workflow:
-As soon as a new Mac/IP is discovered, the OS detection module sends the event to Management Plane which includes detected OS type, MAC address and IP. Upon receiving the event, the Security Policy groups (e.g. Windows group or Linux Group) is updated with the Mac and IP. There are default firewall rules enforced in the data plane with Specific type of traffic allowed based on the type of OS. The source groups in the rule contains these groups. As soon as security group update happens, a data change notification invokes the firewall rule realization sync. The newly detected IP/Mac is now restricted. 
-All the functionality implemented here (Events, Security-Groups, Firewall Rules) can be further programmmed using the REST API calls for further customization. These APIs are documented below.
+As soon as a new Mac/IP is discovered, the OS detection module sends the event to Management Plane which includes detected OS type, MAC address and IP. Upon receiving
+the event, the Security Policy groups (e.g. Windows group or Linux Group) is updated with the Mac and IP. There are default firewall rules  enforced in the data plane 
+with Specific type of traffic allowed based on the type of OS. The source groups in the rule contains these groups. As soon as security group   update happens, a data 
+change notification invokes the firewall rule realization sync. The newly detected IP/Mac is now restricted. 
+
+All the functionality implemented here (Events, Security-Groups, Firewall Rules) can be further programmmed using the REST API calls for further  customization. These 
+APIs are documented below.
 
 
 1. Modules and structure of the App.
