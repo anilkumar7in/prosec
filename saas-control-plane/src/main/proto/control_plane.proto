@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+package prosec.controlplane.v1;
+
+option java_multiple_files = true;
+option java_package = "com.prosec.saas.proto";
+option java_outer_classname = "ControlPlaneProto";
+
+enum TenantLifecycle {
+  TENANT_LIFECYCLE_UNSPECIFIED = 0;
+  TENANT_ACTIVE = 1;
+  TENANT_SUSPENDED = 2;
+}
+
+enum SiteConnectionState {
+  SITE_CONNECTION_STATE_UNSPECIFIED = 0;
+  SITE_CONNECTED = 1;
+  SITE_DEGRADED = 2;
+  SITE_DISCONNECTED = 3;
+}
+
+enum ContainerRuntime {
+  CONTAINER_RUNTIME_UNSPECIFIED = 0;
+  CONTAINERD = 1;
+  CRI_O = 2;
+  DOCKER = 3;
+}
+
+enum ObjectType {
+  OBJECT_TYPE_UNSPECIFIED = 0;
+  GLOBAL_POLICY = 1;
+  CONTAINER_GROUP = 2;
+  INSPECTION_PROFILE = 3;
+  NETWORK_SEGMENT = 4;
+}
+
+enum AccessEffect {
+  ACCESS_EFFECT_UNSPECIFIED = 0;
+  ACCESS_DENIED = 1;
+  ACCESS_ALLOWED = 2;
+}
+
+message Tenant {
+  string id = 1;
+  string display_name = 2;
+  TenantLifecycle lifecycle = 3;
+  int64 created_at_epoch_ms = 4;
+}
+
+message CreateTenantRequest { string display_name = 1; }
+message TenantResponse { Tenant tenant = 1; }
+
+message Site {
+  string id = 1;
+  string tenant_id = 2;
+  string display_name = 3;
+  string region = 4;
+  SiteConnectionState connection_state = 5;
+  int64 last_seen_epoch_ms = 6;
+}
+
+message ConnectSiteRequest {
+  string tenant_id = 1;
+  string display_name = 2;
+  string region = 3;
+}
+
+message SiteHeartbeatRequest {
+  string tenant_id = 1;
+  string site_id = 2;
+}
+
+// Issued once at connect (and on rotation). Only a hash is stored server-side.
+message SiteCredential {
+  string site_id = 1;
+  string token = 2;
+  int64 issued_at_epoch_ms = 3;
+}
+
+message RotateSiteCredentialRequest {
+  string tenant_id = 1;
+  string site_id = 2;
+}
+
+message SiteResponse {
+  Site site = 1;
+  SiteCredential credential = 2;
+}
+
+message ContainerWorkload {
+  string id = 1;
+  string tenant_id = 2;
+  string site_id = 3;
+  string cluster_name = 4;
+  string namespace = 5;
+  string pod_name = 6;
+  string container_name = 7;
+  string image = 8;
+  string image_digest = 9;
+  ContainerRuntime runtime = 10;
+  map<string, string> labels = 11;
+  repeated string ip_addresses = 12;
+  int64 observed_at_epoch_ms = 13;
+}
+
+message UpsertContainerInventoryRequest {
+  string tenant_id = 1;
+  string site_id = 2;
+  repeated ContainerWorkload containers = 3;
+}
+
+message ContainerInventoryResponse { repeated ContainerWorkload containers = 1; }
+
+message ListContainerInventoryRequest {
+  string tenant_id = 1;
+  string site_id = 2;
+  string namespace = 3;
+}
+
+message GlobalObject {
+  string id = 1;
+  ObjectType object_type = 2;
+  string display_name = 3;
+  bytes protobuf_payload = 4;
+  int64 created_at_epoch_ms = 5;
+  int64 version = 6;
+  int64 updated_at_epoch_ms = 7;
+}
+
+message UpdateGlobalObjectRequest {
+  string object_id = 1;
+  string display_name = 2;
+  bytes protobuf_payload = 3;
+}
+
+message GlobalObjectVersionListResponse { repeated GlobalObject versions = 1; }
+
+message CreateGlobalObjectRequest {
+  ObjectType object_type = 1;
+  string display_name = 2;
+  bytes protobuf_payload = 3;
+}
+
+message GlobalObjectResponse { GlobalObject object = 1; }
+
+message ObjectGrant {
+  string object_id = 1;
+  string tenant_id = 2;
+  repeated string user_ids = 3;
+  repeated string roles = 4;
+  repeated string actions = 5;
+}
+
+message GrantObjectAccessRequest { ObjectGrant grant = 1; }
+message ObjectGrantResponse { ObjectGrant grant = 1; }
+
+message ListObjectGrantsRequest { string tenant_id = 1; }
+message ObjectGrantListResponse { repeated ObjectGrant grants = 1; }
+
+message RevokeObjectAccessRequest {
+  string tenant_id = 1;
+  string object_id = 2;
+}
+
+message EvaluateAccessRequest {
+  string object_id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+  string action = 4;
+  // Roles asserted by the caller's identity provider; matched against grant roles.
+  repeated string roles = 5;
+}
+
+message AccessDecisionResponse {
+  AccessEffect effect = 1;
+  string reason = 2;
+}
+
+// Immutable audit / change-feed record. seq is assigned by the event log.
+message EventRecord {
+  int64 seq = 1;
+  string tenant_id = 2;
+  string event_type = 3;
+  string actor = 4;
+  string object_id = 5;
+  string detail = 6;
+  int64 occurred_at_epoch_ms = 7;
+}
+
+message ListEventsRequest {
+  string tenant_id = 1;
+  string event_type = 2;
+  // When > 0, returns events with seq > after_seq in ascending order (change-feed
+  // polling). When 0, returns the latest events in descending order (audit view).
+  int64 after_seq = 3;
+  int32 limit = 4;
+}
+
+message EventListResponse {
+  repeated EventRecord events = 1;
+  int64 latest_seq = 2;
+}

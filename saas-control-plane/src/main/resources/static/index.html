@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prosec Control Plane</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand">Prosec</div>
+      <nav>
+        <button class="nav-item active" type="button" data-view="control">Control</button>
+        <button class="nav-item" type="button" data-view="inventory">Inventory</button>
+        <button class="nav-item" type="button" data-view="access">Access</button>
+        <button class="nav-item" type="button" data-view="events">Events</button>
+      </nav>
+      <div class="rail-footer">
+        <label class="rail-label">Admin API key
+          <input id="apiKey" type="password" value="dev-admin-key" autocomplete="off">
+        </label>
+      </div>
+    </aside>
+
+    <main class="workspace">
+
+      <!-- ============ CONTROL ============ -->
+      <section class="view active" id="view-control">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">SaaS management plane</p>
+            <h1>Container Security Control</h1>
+          </div>
+          <button id="runFlow" class="primary" type="button">Run MVP Flow</button>
+        </header>
+
+        <section class="status-grid" aria-label="Control plane status">
+          <article class="metric"><span>Tenant</span><strong id="tenantId">Not created</strong></article>
+          <article class="metric"><span>Site</span><strong id="siteId">Not connected</strong></article>
+          <article class="metric"><span>Site credential</span><strong id="credentialState">Not issued</strong></article>
+          <article class="metric"><span>Containers</span><strong id="containerState">No inventory</strong></article>
+          <article class="metric"><span>Policy object</span><strong id="objectState">No object yet</strong></article>
+          <article class="metric"><span>Access</span><strong id="accessState">Not evaluated</strong></article>
+        </section>
+
+        <section class="panel-grid">
+          <section class="panel wide">
+            <div class="panel-head">
+              <h2>Tenant And Site</h2>
+              <span class="tag">Direct SaaS connection</span>
+            </div>
+            <div class="form-grid">
+              <label>Tenant name<input id="tenantName" value="Acme Security Lab"></label>
+              <label>Site name<input id="siteName" value="primary-k8s-site"></label>
+              <label>Region<input id="region" value="us-east"></label>
+            </div>
+          </section>
+
+          <section class="panel wide">
+            <div class="panel-head">
+              <h2>Container MVP</h2>
+              <span class="tag">Inventory first</span>
+            </div>
+            <div class="form-grid">
+              <label>Cluster<input id="clusterName" value="prod-cluster-1"></label>
+              <label>Namespace<input id="namespace" value="payments"></label>
+              <label>Pod<input id="podName" value="checkout-api-7f7c9c"></label>
+              <label>Container<input id="containerName" value="checkout-api"></label>
+              <label>Image<input id="image" value="registry.example.com/checkout-api:1.0.0"></label>
+              <label>IP address<input id="ipAddress" value="10.42.1.25"></label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h2>Global Object</h2></div>
+            <label>Policy object<input id="objectName" value="default-container-baseline"></label>
+            <p id="objectId" class="muted">No object yet</p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h2>OU-RBAC</h2></div>
+            <label>User<input id="userId" value="admin@acme.test"></label>
+            <label>Action<input id="action" value="apply"></label>
+            <p id="decisionReason" class="muted">Access has not been evaluated.</p>
+          </section>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="panel-head"><h2>Execution Log</h2></div>
+          <ol id="log"></ol>
+        </section>
+      </section>
+
+      <!-- ============ INVENTORY ============ -->
+      <section class="view" id="view-inventory">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Tenant-partitioned</p>
+            <h1>Container Inventory</h1>
+          </div>
+          <button id="refreshInventory" class="primary" type="button">Refresh</button>
+        </header>
+        <section class="panel">
+          <div class="form-grid">
+            <label>Tenant ID<input id="invTenant" placeholder="tenant_..."></label>
+            <label>Site filter<input id="invSite" placeholder="site_... (optional)"></label>
+            <label>Namespace filter<input id="invNamespace" placeholder="optional"></label>
+          </div>
+        </section>
+        <section class="panel table-panel">
+          <table class="data-table">
+            <thead>
+              <tr><th>Namespace</th><th>Pod</th><th>Container</th><th>Image</th><th>IPs</th><th>Observed</th></tr>
+            </thead>
+            <tbody id="inventoryRows">
+              <tr><td colspan="6" class="muted">Run the MVP flow or enter a tenant ID, then refresh.</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+      <!-- ============ ACCESS ============ -->
+      <section class="view" id="view-access">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Object user RBAC</p>
+            <h1>Access Grants</h1>
+          </div>
+          <button id="refreshGrants" class="primary" type="button">Refresh</button>
+        </header>
+        <section class="panel">
+          <label>Tenant ID<input id="accTenant" placeholder="tenant_..."></label>
+        </section>
+        <section class="panel table-panel">
+          <table class="data-table">
+            <thead>
+              <tr><th>Object</th><th>Users</th><th>Roles</th><th>Actions</th><th></th></tr>
+            </thead>
+            <tbody id="grantRows">
+              <tr><td colspan="5" class="muted">Enter a tenant ID and refresh to see its grants.</td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Decision Tester</h2>
+            <span class="tag">Evaluates live policy</span>
+          </div>
+          <div class="form-grid">
+            <label>Object ID<input id="testObject" placeholder="object_..."></label>
+            <label>User<input id="testUser" value="admin@acme.test"></label>
+            <label>Roles (comma-separated)<input id="testRoles" placeholder="SECURITY_ADMIN"></label>
+            <label>Action<input id="testAction" value="read"></label>
+          </div>
+          <div class="tester-row">
+            <button id="runDecision" class="primary" type="button">Evaluate</button>
+            <p id="testResult" class="muted">No decision yet.</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============ EVENTS ============ -->
+      <section class="view" id="view-events">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Immutable audit trail</p>
+            <h1>Event Log</h1>
+          </div>
+          <button id="refreshEvents" class="primary" type="button">Refresh</button>
+        </header>
+        <section class="panel">
+          <div class="form-grid">
+            <label>Tenant filter<input id="evtTenant" placeholder="tenant_... (optional)"></label>
+            <label>Type filter<input id="evtType" placeholder="e.g. grant.created (optional)"></label>
+            <label>Limit<input id="evtLimit" value="50"></label>
+          </div>
+        </section>
+        <section class="panel table-panel">
+          <table class="data-table">
+            <thead>
+              <tr><th>Seq</th><th>Time</th><th>Type</th><th>Actor</th><th>Object</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="eventRows">
+              <tr><td colspan="6" class="muted">Refresh to load the latest events.</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

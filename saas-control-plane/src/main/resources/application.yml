@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: prosec-saas-control-plane
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/prosec;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    driver-class-name: org.h2.Driver
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  sql:
+    init:
+      mode: always
+
+server:
+  port: 8080
+
+prosec:
+  api:
+    protobuf-media-type: application/x-protobuf
+  security:
+    # Operator API key required on all /v1/* endpoints except the two
+    # site-credentialed calls. Override in every real deployment.
+    admin-api-key: ${PROSEC_ADMIN_API_KEY:dev-admin-key}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/prosec}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:prosec}
+    password: ${DB_PASSWORD:prosec}

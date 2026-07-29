@@ -1,0 +1,13 @@
+.git/
+.agents/
+.codex/
+instance/
+logs/
+app/
+services/
+__pycache__/
+*.pyc
+saas-control-plane/target/
+saas-control-plane/.docker-tmp/
+saas-control-plane/data/
+data/
