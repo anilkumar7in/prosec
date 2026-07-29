@@ -6,8 +6,15 @@ services:
     image: prosec-saas-control-plane
     ports:
       - "8080:8080"
+    # Pass-through form (no "="): each variable reaches the container only when
+    # it is set on the host. Assigning an empty default instead would shadow the
+    # application.yml fallbacks with empty strings and break the datasource.
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      - SPRING_PROFILES_ACTIVE
+      - PROSEC_ADMIN_API_KEY
+      - DB_URL
+      - DB_USERNAME
+      - DB_PASSWORD
     volumes:
       - control-plane-data:/app/data
     depends_on:
